@@ -1,0 +1,36 @@
+# Another example for admin access
+apiVersion: rbac.operator.io/v1
+kind: NamespaceRBACConfig
+metadata:
+  name: admin-rbac
+spec:
+  namespaceSelector:
+    annotations:
+      "environment": "production"
+    labels:
+      "criticality": "high"
+  
+  rbacTemplates:
+    roles:
+    - name: "admin-{{.Namespace.Name}}"
+      rules:
+      - apiGroups: ["*"]
+        resources: ["*"]
+        verbs: ["*"]
+      labels:
+        role-type: "admin"
+    
+    roleBindings:
+    - name: "admin-binding-{{.Namespace.Name}}"
+      roleRef:
+        kind: "Role"
+        name: "admin-{{.Namespace.Name}}"
+      subjects:
+      - kind: "Group"
+        name: "cluster-admins"
+        apiGroup: "rbac.authorization.k8s.io"
+  
+  config:
+    mergeStrategy: "replace"  # Admin access takes precedence
+    cleanup:
+      deleteOrphanedClusterResources: true

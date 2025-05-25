@@ -1,0 +1,89 @@
+apiVersion: rbac.operator.io/v1
+kind: NamespaceRBACConfig
+metadata:
+  name: dev-team-rbac
+spec:
+  # Select namespaces with specific annotation and name pattern
+  namespaceSelector:
+    nameRegex: "^(dev|test|staging)-.*"
+    annotations:
+      "team": "platform"
+      "rbac.operator.io/managed": "true"
+    excludeNamespaces:
+      - "dev-system"
+  
+  rbacTemplates:
+    # Create namespace-scoped roles
+    roles:
+    - name: "{{.Config.Naming.Prefix}}developer-{{.Namespace.Name}}"
+      rules:
+      - apiGroups: [""]
+        resources: ["pods", "services", "configmaps", "secrets"]
+        verbs: ["get", "list", "create", "update", "patch", "delete"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "replicasets"]
+        verbs: ["get", "list", "create", "update", "patch", "delete"]
+      labels:
+        managed-by: "namespace-rbac-operator"
+        team: "{{getOrDefault .Namespace.Labels \"team\" \"unknown\"}}"
+      annotations:
+        "rbac.operator.io/created-by": "{{.CRD.Name}}"
+    
+    # Create cluster-scoped roles for cross-namespace access
+    clusterRoles:
+    - name: "{{.Config.Naming.Prefix}}cross-ns-reader-{{.Namespace.Name}}"
+      rules:
+      - apiGroups: [""]
+        resources: ["namespaces"]
+        verbs: ["get", "list"]
+      - apiGroups: [""]
+        resources: ["nodes"]
+        verbs: ["get", "list"]
+      labels:
+        managed-by: "namespace-rbac-operator"
+        scope: "cluster"
+    
+    # Create role bindings for namespace-scoped access
+    roleBindings:
+    - name: "{{.Config.Naming.Prefix}}developers-{{.Namespace.Name}}"
+      roleRef:
+        kind: "Role"
+        name: "{{.Config.Naming.Prefix}}developer-{{.Namespace.Name}}"
+      subjects:
+      - kind: "Group"
+        name: "dev-team-{{getOrDefault .Namespace.Labels \"team\" \"unknown\"}}"
+        apiGroup: "rbac.authorization.k8s.io"
+      - kind: "ServiceAccount"
+        name: "{{.CustomVars.serviceAccountName}}"
+        namespace: "{{.Namespace.Name}}"
+      labels:
+        managed-by: "namespace-rbac-operator"
+    
+    # Create cluster role bindings
+    clusterRoleBindings:
+    - name: "{{.Config.Naming.Prefix}}cross-ns-access-{{.Namespace.Name}}"
+      roleRef:
+        kind: "ClusterRole"
+        name: "{{.Config.Naming.Prefix}}cross-ns-reader-{{.Namespace.Name}}"
+      subjects:
+      - kind: "Group"
+        name: "dev-team-{{getOrDefault .Namespace.Labels \"team\" \"unknown\"}}"
+        apiGroup: "rbac.authorization.k8s.io"
+      labels:
+        managed-by: "namespace-rbac-operator"
+  
+  config:
+    naming:
+      prefix: "auto-"
+      suffix: ""
+      separator: "-"
+    
+    mergeStrategy: "merge"
+    
+    templateVariables:
+      serviceAccountName: "developer-sa"
+      teamLead: "john.doe"
+    
+    cleanup:
+      deleteOrphanedClusterResources: true
+      gracePeriodSeconds: 30

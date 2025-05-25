@@ -1,0 +1,387 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: namespacerbacconfigs.rbac.operator.io
+spec:
+  group: rbac.operator.io
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              # Namespace selection strategy
+              namespaceSelector:
+                type: object
+                properties:
+                  # Regex pattern matching
+                  nameRegex:
+                    type: string
+                    description: "Regex pattern to match namespace names"
+                  # Annotation-based matching
+                  annotations:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: "Annotations that must be present on namespace"
+                  # Label-based matching
+                  labels:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: "Labels that must be present on namespace"
+                  # Explicit include/exclude lists
+                  includeNamespaces:
+                    type: array
+                    items:
+                      type: string
+                    description: "Explicit list of namespaces to include"
+                  excludeNamespaces:
+                    type: array
+                    items:
+                      type: string
+                    description: "Explicit list of namespaces to exclude"
+                description: "Criteria for selecting which namespaces this config applies to"
+              
+              # RBAC Templates
+              rbacTemplates:
+                type: object
+                properties:
+                  # Roles (namespace-scoped)
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: "Name template for the Role (supports template variables)"
+                        rules:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              apiGroups:
+                                type: array
+                                items:
+                                  type: string
+                              resources:
+                                type: array
+                                items:
+                                  type: string
+                              verbs:
+                                type: array
+                                items:
+                                  type: string
+                              resourceNames:
+                                type: array
+                                items:
+                                  type: string
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Labels to apply to the Role"
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Annotations to apply to the Role"
+                      required:
+                      - name
+                      - rules
+                  
+                  # ClusterRoles (cluster-scoped)
+                  clusterRoles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: "Name template for the ClusterRole (supports template variables)"
+                        rules:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              apiGroups:
+                                type: array
+                                items:
+                                  type: string
+                              resources:
+                                type: array
+                                items:
+                                  type: string
+                              verbs:
+                                type: array
+                                items:
+                                  type: string
+                              resourceNames:
+                                type: array
+                                items:
+                                  type: string
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Labels to apply to the ClusterRole"
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Annotations to apply to the ClusterRole"
+                      required:
+                      - name
+                      - rules
+                  
+                  # RoleBindings (namespace-scoped)
+                  roleBindings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: "Name template for the RoleBinding (supports template variables)"
+                        roleRef:
+                          type: object
+                          properties:
+                            apiGroup:
+                              type: string
+                              default: "rbac.authorization.k8s.io"
+                            kind:
+                              type: string
+                              enum: ["Role", "ClusterRole"]
+                            name:
+                              type: string
+                              description: "Name of Role/ClusterRole to bind to (supports template variables)"
+                          required:
+                          - kind
+                          - name
+                        subjects:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              kind:
+                                type: string
+                                enum: ["User", "Group", "ServiceAccount"]
+                              name:
+                                type: string
+                                description: "Name of the subject (supports template variables)"
+                              namespace:
+                                type: string
+                                description: "Namespace for ServiceAccount subjects (supports template variables)"
+                              apiGroup:
+                                type: string
+                                description: "API group for User/Group subjects"
+                            required:
+                            - kind
+                            - name
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Labels to apply to the RoleBinding"
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Annotations to apply to the RoleBinding"
+                      required:
+                      - name
+                      - roleRef
+                      - subjects
+                  
+                  # ClusterRoleBindings (cluster-scoped)
+                  clusterRoleBindings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: "Name template for the ClusterRoleBinding (supports template variables)"
+                        roleRef:
+                          type: object
+                          properties:
+                            apiGroup:
+                              type: string
+                              default: "rbac.authorization.k8s.io"
+                            kind:
+                              type: string
+                              enum: ["ClusterRole"]
+                            name:
+                              type: string
+                              description: "Name of ClusterRole to bind to (supports template variables)"
+                          required:
+                          - kind
+                          - name
+                        subjects:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              kind:
+                                type: string
+                                enum: ["User", "Group", "ServiceAccount"]
+                              name:
+                                type: string
+                                description: "Name of the subject (supports template variables)"
+                              namespace:
+                                type: string
+                                description: "Namespace for ServiceAccount subjects (supports template variables)"
+                              apiGroup:
+                                type: string
+                                description: "API group for User/Group subjects"
+                            required:
+                            - kind
+                            - name
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Labels to apply to the ClusterRoleBinding"
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          description: "Annotations to apply to the ClusterRoleBinding"
+                      required:
+                      - name
+                      - roleRef
+                      - subjects
+                description: "RBAC resources to create/manage"
+              
+              # Configuration options
+              config:
+                type: object
+                properties:
+                  # Naming configuration
+                  naming:
+                    type: object
+                    properties:
+                      prefix:
+                        type: string
+                        description: "Prefix for all generated resource names"
+                      suffix:
+                        type: string
+                        description: "Suffix for all generated resource names"
+                      separator:
+                        type: string
+                        default: "-"
+                        description: "Separator for name components"
+                    description: "Naming pattern configuration"
+                  
+                  # Merge strategy for conflicts
+                  mergeStrategy:
+                    type: string
+                    enum: ["merge", "replace", "ignore"]
+                    default: "merge"
+                    description: "Strategy when multiple CRDs affect the same namespace"
+                  
+                  # Template variables
+                  templateVariables:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: "Custom variables available in templates"
+                  
+                  # Cleanup behavior
+                  cleanup:
+                    type: object
+                    properties:
+                      deleteOrphanedClusterResources:
+                        type: boolean
+                        default: true
+                        description: "Delete cluster-scoped resources when no namespaces reference them"
+                      gracePeriodSeconds:
+                        type: integer
+                        default: 30
+                        description: "Grace period before deleting resources"
+                    description: "Cleanup behavior configuration"
+                description: "Additional configuration options"
+            
+            required:
+            - namespaceSelector
+            - rbacTemplates
+          
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                      enum: ["True", "False", "Unknown"]
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                    reason:
+                      type: string
+                    message:
+                      type: string
+                  required:
+                  - type
+                  - status
+              appliedNamespaces:
+                type: array
+                items:
+                  type: string
+                description: "List of namespaces currently managed by this config"
+              createdResources:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                  clusterRoles:
+                    type: array
+                    items:
+                      type: string
+                  roleBindings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                  clusterRoleBindings:
+                    type: array
+                    items:
+                      type: string
+                description: "Resources created by this config"
+    additionalPrinterColumns:
+    - name: Applied Namespaces
+      type: integer
+      description: Number of namespaces this config applies to
+      jsonPath: ".status.appliedNamespaces.length"
+    - name: Age
+      type: date
+      jsonPath: ".metadata.creationTimestamp"
+  scope: Cluster
+  names:
+    plural: namespacerbacconfigs
+    singular: namespacerbacconfig
+    kind: NamespaceRBACConfig
+    shortNames:
+    - nsrbac

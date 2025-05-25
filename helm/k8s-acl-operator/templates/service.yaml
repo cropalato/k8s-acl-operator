@@ -1,0 +1,20 @@
+{{- if .Values.rbacProxy.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-controller-manager-metrics-service
+  namespace: {{ include "k8s-acl-operator.namespace" . }}
+  labels:
+    control-plane: controller-manager
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+spec:
+  ports:
+  - name: https
+    port: {{ .Values.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.service.targetPort }}
+  selector:
+    control-plane: controller-manager
+    {{- include "k8s-acl-operator.selectorLabels" . | nindent 4 }}
+  type: {{ .Values.service.type }}
+{{- end }}

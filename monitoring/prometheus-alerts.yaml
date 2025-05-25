@@ -1,0 +1,158 @@
+groups:
+- name: rbac-operator.rules
+  rules:
+  # High-severity alerts
+  - alert: RBACOperatorDown
+    expr: up{job="rbac-operator"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "RBAC Operator is down"
+      description: "RBAC Operator has been down for more than 1 minute"
+
+  - alert: RBACOperatorHighErrorRate
+    expr: |
+      (
+        rate(rbac_operator_reconciliation_total{result="error"}[5m]) / 
+        rate(rbac_operator_reconciliation_total[5m])
+      ) * 100 > 10
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High RBAC reconciliation error rate"
+      description: "RBAC Operator error rate is {{ $value }}% for config {{ $labels.config }}"
+
+  - alert: RBACOperatorComponentUnhealthy
+    expr: rbac_operator_health_status == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "RBAC Operator component unhealthy"
+      description: "Component {{ $labels.component }} is unhealthy for more than 2 minutes"
+
+  - alert: RBACOperatorStaleReconciliation
+    expr: |
+      time() - rbac_operator_last_successful_reconcile_timestamp > 600
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: "RBAC reconciliation is stale"
+      description: "No successful reconciliation for config {{ $labels.config }} in the last 10 minutes"
+
+  # Medium-severity alerts  
+  - alert: RBACOperatorResourceOperationFailures
+    expr: |
+      rate(rbac_operator_resource_operations_total{result="error"}[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High RBAC resource operation failure rate"
+      description: "{{ $labels.operation }} operations failing for {{ $labels.resource_type }} in config {{ $labels.config }} at {{ $value }} ops/sec"
+
+  - alert: RBACOperatorTemplateProcessingErrors
+    expr: |
+      rate(rbac_operator_template_processing_errors_total[5m]) > 0.05
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "RBAC template processing errors"
+      description: "Template processing errors for {{ $labels.template_type }} in config {{ $labels.config }} at {{ $value }} errors/sec"
+
+  - alert: RBACOperatorSlowReconciliation
+    expr: |
+      histogram_quantile(0.95, rate(rbac_operator_reconciliation_duration_seconds_bucket[5m])) > 30
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow RBAC reconciliation"
+      description: "95th percentile reconciliation duration is {{ $value }}s for controller {{ $labels.controller }}"
+
+  - alert: RBACOperatorSlowTemplateProcessing
+    expr: |
+      histogram_quantile(0.95, rate(rbac_operator_template_processing_duration_seconds_bucket[5m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow template processing"
+      description: "95th percentile template processing duration is {{ $value }}s for {{ $labels.template_type }} in config {{ $labels.config }}"
+
+  - alert: RBACOperatorCleanupFailures
+    expr: |
+      rate(rbac_operator_cleanup_operations_total{result="error"}[5m]) > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "RBAC cleanup operation failures"
+      description: "Cleanup failures for {{ $labels.resource_type }} at {{ $value }} failures/sec"
+
+  # Low-severity alerts
+  - alert: RBACOperatorNoActivity
+    expr: |
+      rate(rbac_operator_reconciliation_total[10m]) == 0
+    for: 15m
+    labels:
+      severity: info
+    annotations:
+      summary: "No RBAC reconciliation activity"
+      description: "No reconciliation activity detected for 15 minutes - this may be normal if no changes are occurring"
+
+  - alert: RBACOperatorHighConflictResolution
+    expr: |
+      rate(rbac_operator_conflict_resolution_total{strategy!="ignore"}[5m]) > 0.5
+    for: 10m
+    labels:
+      severity: info
+    annotations:
+      summary: "High conflict resolution activity"
+      description: "High {{ $labels.strategy }} conflict resolution rate ({{ $value }} ops/sec) for {{ $labels.resource_type }} in config {{ $labels.config }}"
+
+  - alert: RBACOperatorManagedResourcesDrift
+    expr: |
+      (
+        sum(rbac_operator_managed_resources_total) - 
+        sum(rbac_operator_managed_resources_total offset 1h)
+      ) > 100
+    for: 5m
+    labels:
+      severity: info
+    annotations:
+      summary: "Large change in managed resources"
+      description: "Managed resources count changed by {{ $value }} in the last hour"
+
+# Recording rules for efficiency
+- name: rbac-operator.recording
+  rules:
+  - record: rbac_operator:reconciliation_success_rate_5m
+    expr: |
+      rate(rbac_operator_reconciliation_total{result="success"}[5m]) / 
+      rate(rbac_operator_reconciliation_total[5m])
+
+  - record: rbac_operator:reconciliation_error_rate_5m  
+    expr: |
+      rate(rbac_operator_reconciliation_total{result="error"}[5m]) / 
+      rate(rbac_operator_reconciliation_total[5m])
+
+  - record: rbac_operator:reconciliation_duration_p95_5m
+    expr: |
+      histogram_quantile(0.95, rate(rbac_operator_reconciliation_duration_seconds_bucket[5m]))
+
+  - record: rbac_operator:template_processing_duration_p95_5m
+    expr: |
+      histogram_quantile(0.95, rate(rbac_operator_template_processing_duration_seconds_bucket[5m]))
+
+  - record: rbac_operator:total_managed_resources
+    expr: |
+      sum(rbac_operator_managed_resources_total)
+
+  - record: rbac_operator:total_managed_namespaces
+    expr: |
+      sum(rbac_operator_managed_namespaces_total)

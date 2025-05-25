@@ -1,0 +1,84 @@
+{{- if .Values.samples.enabled }}
+apiVersion: rbac.operator.io/v1
+kind: NamespaceRBACConfig
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-dev-team-rbac
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+spec:
+  namespaceSelector:
+    nameRegex: "^(dev|test|staging)-.*"
+    annotations:
+      "team": "platform"
+      "rbac.operator.io/managed": "true"
+    excludeNamespaces:
+      - "dev-system"
+  
+  rbacTemplates:
+    roles:
+    - name: "auto-developer-{{.Namespace.Name}}"
+      rules:
+      - apiGroups: [""]
+        resources: ["pods", "services", "configmaps", "secrets"]
+        verbs: ["get", "list", "create", "update", "patch", "delete"]
+      - apiGroups: ["apps"]
+        resources: ["deployments", "replicasets"]
+        verbs: ["get", "list", "create", "update", "patch", "delete"]
+      labels:
+        managed-by: "namespace-rbac-operator"
+        team: "{{.Namespace.Labels.team}}"
+      annotations:
+        "rbac.operator.io/created-by": "{{.CRD.Name}}"
+    
+    clusterRoles:
+    - name: "auto-cross-ns-reader-{{.Namespace.Name}}"
+      rules:
+      - apiGroups: [""]
+        resources: ["namespaces"]
+        verbs: ["get", "list"]
+      - apiGroups: [""]
+        resources: ["nodes"]
+        verbs: ["get", "list"]
+      labels:
+        managed-by: "namespace-rbac-operator"
+        scope: "cluster"
+    
+    roleBindings:
+    - name: "auto-developers-{{.Namespace.Name}}"
+      roleRef:
+        kind: "Role"
+        name: "auto-developer-{{.Namespace.Name}}"
+      subjects:
+      - kind: "Group"
+        name: "dev-team-{{.Namespace.Labels.team}}"
+        apiGroup: "rbac.authorization.k8s.io"
+      - kind: "ServiceAccount"
+        name: "developer-sa"
+        namespace: "{{.Namespace.Name}}"
+      labels:
+        managed-by: "namespace-rbac-operator"
+    
+    clusterRoleBindings:
+    - name: "auto-cross-ns-access-{{.Namespace.Name}}"
+      roleRef:
+        kind: "ClusterRole"
+        name: "auto-cross-ns-reader-{{.Namespace.Name}}"
+      subjects:
+      - kind: "Group"
+        name: "dev-team-{{.Namespace.Labels.team}}"
+        apiGroup: "rbac.authorization.k8s.io"
+      labels:
+        managed-by: "namespace-rbac-operator"
+  
+  config:
+    naming:
+      prefix: "auto-"
+      separator: "-"
+    mergeStrategy: "merge"
+    templateVariables:
+      serviceAccountName: "developer-sa"
+      teamLead: "john.doe"
+    cleanup:
+      deleteOrphanedClusterResources: true
+      gracePeriodSeconds: 30
+{{- end }}

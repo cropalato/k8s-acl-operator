@@ -1,0 +1,134 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "k8s-acl-operator.serviceAccountName" . }}
+  namespace: {{ include "k8s-acl-operator.namespace" . }}
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-manager-role
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rbac.operator.io
+  resources:
+  - namespacerbacconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.operator.io
+  resources:
+  - namespacerbacconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - rbac.operator.io
+  resources:
+  - namespacerbacconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-manager-rolebinding
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "k8s-acl-operator.fullname" . }}-manager-role
+subjects:
+- kind: ServiceAccount
+  name: {{ include "k8s-acl-operator.serviceAccountName" . }}
+  namespace: {{ include "k8s-acl-operator.namespace" . }}
+{{- if .Values.rbacProxy.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-metrics-reader
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+rules:
+- nonResourceURLs:
+  - "/metrics"
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-proxy-role
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "k8s-acl-operator.fullname" . }}-proxy-rolebinding
+  labels:
+    {{- include "k8s-acl-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "k8s-acl-operator.fullname" . }}-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: {{ include "k8s-acl-operator.serviceAccountName" . }}
+  namespace: {{ include "k8s-acl-operator.namespace" . }}
+{{- end }}

@@ -1,0 +1,41 @@
+1. Get the operator status by running:
+   kubectl get deployment {{ include "k8s-acl-operator.fullname" . }}-controller-manager -n {{ include "k8s-acl-operator.namespace" . }}
+
+2. Watch the operator logs:
+   kubectl logs -f deployment/{{ include "k8s-acl-operator.fullname" . }}-controller-manager -n {{ include "k8s-acl-operator.namespace" . }}
+
+3. Create a NamespaceRBACConfig:
+   cat <<EOF | kubectl apply -f -
+   apiVersion: rbac.operator.io/v1
+   kind: NamespaceRBACConfig
+   metadata:
+     name: example-rbac
+   spec:
+     namespaceSelector:
+       nameRegex: "^(dev|test)-.*"
+     rbacTemplates:
+       roles:
+       - name: "developer-{{.Namespace.Name}}"
+         rules:
+         - apiGroups: [""]
+           resources: ["pods", "services"]
+           verbs: ["get", "list", "create", "update", "patch", "delete"]
+       roleBindings:
+       - name: "developers-{{.Namespace.Name}}"
+         roleRef:
+           kind: "Role"
+           name: "developer-{{.Namespace.Name}}"
+         subjects:
+         - kind: "Group"
+           name: "developers"
+           apiGroup: "rbac.authorization.k8s.io"
+   EOF
+
+4. Check NamespaceRBACConfigs:
+   kubectl get namespacerbacconfigs
+
+{{- if .Values.rbacProxy.enabled }}
+5. Get metrics (requires port-forward):
+   kubectl port-forward -n {{ include "k8s-acl-operator.namespace" . }} svc/{{ include "k8s-acl-operator.fullname" . }}-controller-manager-metrics-service {{ .Values.service.port }}:{{ .Values.service.port }}
+   curl -k https://localhost:{{ .Values.service.port }}/metrics
+{{- end }}

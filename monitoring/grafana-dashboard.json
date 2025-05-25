@@ -1,0 +1,345 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "RBAC Operator Dashboard",
+    "tags": ["kubernetes", "rbac", "operator"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Overview",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rbac_operator_namespace_configs_total",
+            "legendFormat": "Active Configs",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rbac_operator_managed_namespaces_total)",
+            "legendFormat": "Total Managed Namespaces",
+            "refId": "B"
+          },
+          {
+            "expr": "sum(rbac_operator_managed_resources_total)",
+            "legendFormat": "Total Managed Resources",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Reconciliation Success Rate (5m)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "rate(rbac_operator_reconciliation_total{result=\"success\"}[5m]) / rate(rbac_operator_reconciliation_total[5m]) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 90},
+                {"color": "green", "value": 95}
+              ]
+            },
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Reconciliation Rate (ops/sec)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 6},
+        "targets": [
+          {
+            "expr": "rate(rbac_operator_reconciliation_total[5m])",
+            "legendFormat": "Reconciliations/sec",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "ops"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Health Status",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 8, "x": 16, "y": 6},
+        "targets": [
+          {
+            "expr": "rbac_operator_health_status",
+            "legendFormat": "{{component}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "unit": "short",
+            "min": 0,
+            "max": 1,
+            "mappings": [
+              {"options": {"0": {"text": "Unhealthy"}}, "type": "value"},
+              {"options": {"1": {"text": "Healthy"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Reconciliation Duration",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 10},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(rbac_operator_reconciliation_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.90, rate(rbac_operator_reconciliation_duration_seconds_bucket[5m]))",
+            "legendFormat": "90th percentile",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(rbac_operator_reconciliation_duration_seconds_bucket[5m]))",
+            "legendFormat": "99th percentile",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration",
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Error Rate by Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 10},
+        "targets": [
+          {
+            "expr": "rate(rbac_operator_reconciliation_errors_total[5m])",
+            "legendFormat": "{{error_type}} ({{controller}})",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Errors/sec",
+            "unit": "ops"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Managed Resources by Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 18},
+        "targets": [
+          {
+            "expr": "sum by (resource_type) (rbac_operator_managed_resources_total)",
+            "legendFormat": "{{resource_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Managed Namespaces by Config",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 18},
+        "targets": [
+          {
+            "expr": "rbac_operator_managed_namespaces_total",
+            "legendFormat": "{{config}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Namespaces",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Resource Operations",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 18},
+        "targets": [
+          {
+            "expr": "rate(rbac_operator_resource_operations_total[5m])",
+            "legendFormat": "{{operation}} {{resource_type}} ({{result}})",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations/sec",
+            "unit": "ops"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Template Processing Duration",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 26},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(rbac_operator_template_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile {{template_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration",
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Conflict Resolution Strategy Usage",
+        "type": "piechart",
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 26},
+        "targets": [
+          {
+            "expr": "sum by (strategy) (rate(rbac_operator_conflict_resolution_total[1h]))",
+            "legendFormat": "{{strategy}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Last Successful Reconciliation",
+        "type": "table",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "rbac_operator_last_successful_reconcile_timestamp",
+            "legendFormat": "{{config}} ({{controller}})",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "renameByName": {
+                "config": "Config",
+                "controller": "Controller",
+                "Value": "Last Reconcile (timestamp)"
+              }
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Last Reconcile (timestamp)"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "dateTimeFromNow"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 13,
+        "title": "Cleanup Operations",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(rbac_operator_cleanup_operations_total[5m])",
+            "legendFormat": "{{resource_type}} ({{result}})",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Cleanups/sec",
+            "unit": "ops"
+          }
+        ]
+      }
+    ]
+  }
+}

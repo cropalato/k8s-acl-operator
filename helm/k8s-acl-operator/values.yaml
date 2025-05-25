@@ -1,0 +1,86 @@
+# Default values for k8s-acl-operator
+replicaCount: 1
+
+image:
+  repository: k8s-acl-operator
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+
+service:
+  type: ClusterIP
+  port: 8443
+  targetPort: https
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Metrics configuration
+metrics:
+  enabled: true
+  port: 8080
+  secure: false
+
+# Health probe configuration
+healthProbe:
+  port: 8081
+
+# Operator configuration
+operator:
+  leaderElection: true
+  logLevel: info
+
+# Namespace configuration
+namespace:
+  create: true
+  name: k8s-acl-operator-system
+
+# RBAC proxy configuration
+rbacProxy:
+  enabled: true
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    tag: v0.13.1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 5m
+      memory: 64Mi
+
+# Sample configurations
+samples:
+  enabled: false
