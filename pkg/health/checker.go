@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/yourusername/k8s-acl-operator/pkg/metrics"
+	"github.com/cropalato/k8s-acl-operator/pkg/metrics"
 )
 
 // Checker tracks operator health state

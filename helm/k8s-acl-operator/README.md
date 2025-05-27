@@ -252,7 +252,7 @@ metadata:
   name: k8s-acl-operator
 spec:
   source:
-    repoURL: https://github.com/yourusername/k8s-acl-operator
+    repoURL: https://github.com/cropalato/k8s-acl-operator
     path: helm/k8s-acl-operator
     helm:
       values: |

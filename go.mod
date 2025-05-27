@@ -1,4 +1,4 @@
-module github.com/yourusername/k8s-acl-operator
+module github.com/cropalato/k8s-acl-operator
 
 go 1.21
 

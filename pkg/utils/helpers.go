@@ -22,7 +22,7 @@ package utils
 import (
 	"regexp"
 
-	rbacoperatorv1 "github.com/yourusername/k8s-acl-operator/pkg/apis/rbac/v1"
+	rbacoperatorv1 "github.com/cropalato/k8s-acl-operator/pkg/apis/rbac/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 

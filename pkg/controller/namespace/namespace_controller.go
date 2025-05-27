@@ -26,10 +26,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	rbacoperatorv1 "github.com/yourusername/k8s-acl-operator/pkg/apis/rbac/v1"
-	"github.com/yourusername/k8s-acl-operator/pkg/health"
-	"github.com/yourusername/k8s-acl-operator/pkg/rbac"
-	"github.com/yourusername/k8s-acl-operator/pkg/utils"
+	rbacoperatorv1 "github.com/cropalato/k8s-acl-operator/pkg/apis/rbac/v1"
+	"github.com/cropalato/k8s-acl-operator/pkg/health"
+	"github.com/cropalato/k8s-acl-operator/pkg/rbac"
+	"github.com/cropalato/k8s-acl-operator/pkg/utils"
 )
 
 // NamespaceReconciler reconciles namespace events to trigger RBAC management

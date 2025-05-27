@@ -30,10 +30,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	rbacv1 "github.com/yourusername/k8s-acl-operator/pkg/apis/rbac/v1"
-	"github.com/yourusername/k8s-acl-operator/pkg/controller/namespace"
-	"github.com/yourusername/k8s-acl-operator/pkg/controller/namespacerbacconfig"
-	"github.com/yourusername/k8s-acl-operator/pkg/health"
+	rbacv1 "github.com/cropalato/k8s-acl-operator/pkg/apis/rbac/v1"
+	"github.com/cropalato/k8s-acl-operator/pkg/controller/namespace"
+	"github.com/cropalato/k8s-acl-operator/pkg/controller/namespacerbacconfig"
+	"github.com/cropalato/k8s-acl-operator/pkg/health"
 )
 
 var (

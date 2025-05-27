@@ -4,9 +4,9 @@ description: A Kubernetes operator for automatic RBAC management based on namesp
 type: application
 version: 0.1.0
 appVersion: "latest"
-home: https://github.com/yourusername/k8s-acl-operator
+home: https://github.com/cropalato/k8s-acl-operator
 sources:
-  - https://github.com/yourusername/k8s-acl-operator
+  - https://github.com/cropalato/k8s-acl-operator
 keywords:
   - kubernetes
   - rbac

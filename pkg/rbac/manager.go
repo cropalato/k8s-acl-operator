@@ -33,9 +33,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	rbacoperatorv1 "github.com/yourusername/k8s-acl-operator/pkg/apis/rbac/v1"
-	"github.com/yourusername/k8s-acl-operator/pkg/metrics"
-	"github.com/yourusername/k8s-acl-operator/pkg/template"
+	rbacoperatorv1 "github.com/cropalato/k8s-acl-operator/pkg/apis/rbac/v1"
+	"github.com/cropalato/k8s-acl-operator/pkg/metrics"
+	"github.com/cropalato/k8s-acl-operator/pkg/template"
 )
 
 const (
